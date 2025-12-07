@@ -19,6 +19,8 @@ const MIN_MATCHES = 3;
 const MAX_MATCHES = 15;
 const MAX_PATTERN_ATTEMPTS = 5000;
 
+const BEE_MAX_WORDS = 100;
+
 const KEYBOARD_ROWS = [
   ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
   ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
@@ -219,7 +221,7 @@ function buildBeePuzzle(dictionary: string[]) {
       }
     | null = null;
 
-  for (let attempt = 0; attempt < 300; attempt++) {
+  for (let attempt = 0; attempt < 600; attempt++) {
     const base =
       pangramCandidates[Math.floor(Math.random() * pangramCandidates.length)];
     if (!base) break;
@@ -229,6 +231,9 @@ function buildBeePuzzle(dictionary: string[]) {
     const letterSet = new Set(shuffled);
 
     const valid = dictionary.filter((w) => isBeeWord(w, letterSet, center));
+    if (valid.length > BEE_MAX_WORDS) {
+      continue; // skip overly dense hives
+    }
     const pangrams = valid.filter((w) => isPangram(w, letterSet));
 
     const current = { letters: shuffled, center, valid, pangrams };
