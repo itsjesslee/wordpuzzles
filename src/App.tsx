@@ -1665,10 +1665,10 @@ export default function App() {
                           " bg-amber-400 border-amber-400 text-slate-950";
                       } else if (status === "absent") {
                         keyClasses +=
-                          " bg-rose-200 border-rose-200 text-rose-700";
+                          " bg-rose-400 border-rose-400 text-rose-950";
                       } else {
                         keyClasses +=
-                          " bg-rose-100 border-rose-200 text-rose-700";
+                          " bg-rose-50 border-rose-200 text-rose-500";
                       }
                       return (
                         <div key={keyLetter} className={keyClasses}>
@@ -2011,10 +2011,10 @@ export default function App() {
                           " bg-amber-400 border-amber-400 text-slate-950";
                       } else if (status === "absent") {
                         keyClasses +=
-                          " bg-rose-200 border-rose-200 text-rose-700";
+                          " bg-rose-400 border-rose-400 text-rose-950";
                       } else {
                         keyClasses +=
-                          " bg-rose-100 border-rose-200 text-rose-700";
+                          " bg-rose-50 border-rose-200 text-rose-500";
                       }
                       return (
                         <div key={keyLetter} className={keyClasses}>
@@ -2183,9 +2183,9 @@ export default function App() {
                             } else if (state === "present") {
                               squareClasses += " bg-amber-400";
                             } else if (state === "absent") {
-                              squareClasses += " bg-rose-200";
+                              squareClasses += " bg-rose-400";
                             } else {
-                              squareClasses += " bg-rose-100";
+                              squareClasses += " bg-rose-50";
                             }
                             return (
                               <div key={idx} className={squareClasses} />
