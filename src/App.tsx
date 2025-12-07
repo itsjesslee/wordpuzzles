@@ -286,7 +286,7 @@ function buildBeePuzzle(dictionary: string[]) {
 
 // ---------- React App ----------
 
-type GameMode = "pattern" | "wordle" | "quordle" | "streakle" | "bee";
+type GameMode = "home" | "pattern" | "wordle" | "quordle" | "streakle" | "bee";
 
 export default function App() {
   const [timedMode, setTimedMode] = useState(false);
@@ -299,7 +299,7 @@ export default function App() {
   const [error, setError] = useState("");
 
   // Global game mode
-  const [gameMode, setGameMode] = useState<GameMode>("pattern");
+  const [gameMode, setGameMode] = useState<GameMode>("home");
 
   // Pattern hunt state
   const [pattern, setPattern] = useState<string[] | null>(null);
@@ -310,7 +310,7 @@ export default function App() {
   const [revealSolutions, setRevealSolutions] = useState(false);
   const sortedSolutions = useMemo(() => [...solutions].sort(), [solutions]);
 
-  // Practice Wordle state
+  // Wordle state
   const [wordleAnswer, setWordleAnswer] = useState<string | null>(null);
   const [wordleGuesses, setWordleGuesses] = useState<string[]>([]);
   const [wordleResults, setWordleResults] = useState<Score[][]>([]);
@@ -486,6 +486,22 @@ export default function App() {
     [beeFoundWords]
   );
 
+  function activateMode(nextMode: GameMode) {
+    if (nextMode === "home") {
+      setGameMode("home");
+      stopTimer();
+      setTimerElapsed(0);
+      return;
+    }
+    setGameMode(nextMode);
+    if (loading || error) return;
+    if (nextMode === "pattern") startNewPatternGame();
+    if (nextMode === "wordle") startNewWordleGame();
+    if (nextMode === "quordle") startNewQuordleGame();
+    if (nextMode === "streakle") startNewStreakleGame();
+    if (nextMode === "bee" && beeDict.length > 0) startNewBeeGame();
+  }
+
   // Timer helpers
   function startTimer() {
     setTimerStart(Date.now());
@@ -558,7 +574,7 @@ export default function App() {
 
   // Start an initial game once words are loaded
   useEffect(() => {
-    if (!loading && !error && words.length > 0) {
+    if (!loading && !error && words.length > 0 && gameMode !== "home") {
       if (gameMode === "pattern") {
         startNewPatternGame();
       } else if (gameMode === "wordle") {
@@ -1073,186 +1089,279 @@ export default function App() {
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-rose-900">
             Word Puzzles Lab
           </h1>
-          <button
-            onClick={() => {
-              if (gameMode === "pattern") {
-                startNewPatternGame();
-              } else if (gameMode === "wordle") {
-                startNewWordleGame();
-              } else if (gameMode === "quordle") {
-                startNewQuordleGame();
-              } else if (gameMode === "streakle") {
-                startNewStreakleGame();
-              } else if (gameMode === "bee") {
-                startNewBeeGame();
-              }
-            }}
-            className="text-sm px-3 py-1.5 rounded-full border border-pink-300 bg-pink-100 text-rose-900 hover:border-rose-400 hover:bg-rose-100 transition"
-            type="button"
-          >
-            New round
-          </button>
-        </div>
-        <div className="flex items-center gap-3 mb-3">
-          <label className="inline-flex items-center gap-2 text-sm text-rose-700">
-            <input
-              type="checkbox"
-              className="accent-rose-500"
-              checked={timedMode}
-              onChange={() => {
-                setTimedMode((prev) => {
-                  const next = !prev;
-                  if (next) {
-                    startTimer();
-                  } else {
-                    stopTimer();
-                    setTimerElapsed(0);
-                  }
-                  return next;
-                });
-              }}
-            />
-            Timed mode
-          </label>
-          {timedMode && (
-            <span className="text-xs px-3 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
-              Time: {formatTime(timerElapsed)}
-            </span>
-          )}
-        </div>
-
-        <div className="mb-3">
-          <div className="flex flex-wrap gap-1 rounded-full bg-pink-100 border border-pink-200 p-1 text-xs text-rose-800">
+          {gameMode !== "home" && (
             <button
-              type="button"
               onClick={() => {
-                setGameMode("pattern");
-                if (!pattern && words.length > 0) {
+                if (gameMode === "pattern") {
                   startNewPatternGame();
-                }
-              }}
-              className={
-                "px-3 py-1 rounded-full transition font-semibold " +
-                (gameMode === "pattern"
-                  ? "bg-rose-400 text-rose-50 shadow"
-                  : "text-rose-700 hover:text-rose-500")
-              }
-            >
-              Pattern hunt
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setGameMode("wordle");
-                if (!wordleAnswer && words.length > 0) {
+                } else if (gameMode === "wordle") {
                   startNewWordleGame();
-                }
-              }}
-              className={
-                "px-3 py-1 rounded-full transition font-semibold " +
-                (gameMode === "wordle"
-                  ? "bg-rose-400 text-rose-50 shadow"
-                  : "text-rose-700 hover:text-rose-500")
-              }
-            >
-              Practice Wordle
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setGameMode("quordle");
-                if (!quordleAnswers && words.length > 0) {
+                } else if (gameMode === "quordle") {
                   startNewQuordleGame();
-                }
-              }}
-              className={
-                "px-3 py-1 rounded-full transition font-semibold " +
-                (gameMode === "quordle"
-                  ? "bg-rose-400 text-rose-50 shadow"
-                  : "text-rose-700 hover:text-rose-500")
-              }
-            >
-              Quordle
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setGameMode("streakle");
-                if (!streakleTargets && words.length > 0) {
+                } else if (gameMode === "streakle") {
                   startNewStreakleGame();
-                }
-              }}
-              className={
-                "px-3 py-1 rounded-full transition font-semibold " +
-                (gameMode === "streakle"
-                  ? "bg-rose-400 text-rose-50 shadow"
-                  : "text-rose-700 hover:text-rose-500")
-              }
-            >
-              Streakle
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setGameMode("bee");
-                if (!beeLetters && beeDict.length > 0) {
+                } else if (gameMode === "bee") {
                   startNewBeeGame();
                 }
               }}
-              className={
-                "px-3 py-1 rounded-full transition font-semibold " +
-                (gameMode === "bee"
-                  ? "bg-rose-400 text-rose-50 shadow"
-                  : "text-rose-700 hover:text-rose-500")
-              }
+              className="text-sm px-3 py-1.5 rounded-full border border-pink-300 bg-pink-100 text-rose-900 hover:border-rose-400 hover:bg-rose-100 transition"
+              type="button"
             >
-              Spelling Bee
+              New round
             </button>
-          </div>
-        </div>
-
-        <p className="text-sm text-rose-700 mb-3">
-          {gameMode === "pattern" ? (
-            <>
-              A pattern is chosen from the Wordle answers list so that roughly
-              <span className="font-semibold"> 3-15 </span>
-              words match. Guess any valid word that fits the pattern.
-            </>
-          ) : gameMode === "wordle" ? (
-            <>
-              Practice classic Wordle using the same answer list. You have
-              <span className="font-semibold"> 6 </span>
-              guesses to find the hidden word. Green = correct spot, yellow =
-              wrong spot, grey = not in the word.
-            </>
-          ) : gameMode === "quordle" ? (
-            <>
-              Play four Wordles at once. You have
-              <span className="font-semibold"> 9 </span>
-              guesses, and each guess is applied to all four boards. The
-              keyboard shows colors in quadrants for each board (top-left,
-              top-right, bottom-left, bottom-right).
-            </>
-          ) : gameMode === "bee" ? (
-            <>
-              Spelling Bee: make as many words as possible from
-              <span className="font-semibold"> 7 </span>
-              letters. Every word must be at least 4 letters, include the center
-              letter, and use only the hive letters (repeats allowed). Find the
-              pangram(s) that use all 7.
-            </>
-          ) : (
-            <>
-              Streakle: solve
-              <span className="font-semibold"> 3 </span>
-              target words within
-              <span className="font-semibold"> 8 </span>
-              total guesses. A starting word is auto-played; greens lock in
-              place for future guesses. After you crack a word, the board
-              recolors your past guesses for the next target.
-            </>
           )}
-        </p>
+        </div>
+        {gameMode !== "home" && (
+          <div className="flex items-center gap-3 mb-3">
+            <label className="inline-flex items-center gap-2 text-sm text-rose-700">
+              <input
+                type="checkbox"
+                className="accent-rose-500"
+                checked={timedMode}
+                onChange={() => {
+                  setTimedMode((prev) => {
+                    const next = !prev;
+                    if (next) {
+                      startTimer();
+                    } else {
+                      stopTimer();
+                      setTimerElapsed(0);
+                    }
+                    return next;
+                  });
+                }}
+              />
+              Timed mode
+            </label>
+            {timedMode && (
+              <span className="text-xs px-3 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                Time: {formatTime(timerElapsed)}
+              </span>
+            )}
+          </div>
+        )}
+
+        {gameMode === "home" ? (
+          <>
+            <p className="text-sm text-rose-700 mb-4 leading-relaxed">
+              Choose a game mode to jump in. Play casually or toggle Timed Mode
+              for an extra challenge. Each game lets you reveal answers if you
+              ever get stuck — experiment, practice, and have fun leveling up
+              your puzzle instincts.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="p-4 rounded-2xl border border-pink-200 bg-white shadow-sm">
+                <h3 className="text-base font-semibold text-rose-800 mb-1">
+                  Pattern Hunt
+                </h3>
+                <p className="text-sm text-rose-700 mb-2 leading-relaxed">
+                  Crack a two-letter blueprint hiding 3–15 real words. Spot
+                  every match before you run out of ideas.
+                </p>
+                <button
+                  className="text-sm px-3 py-1.5 rounded-full bg-rose-400 text-rose-50 hover:bg-rose-300 transition"
+                  onClick={() => activateMode("pattern")}
+                  disabled={loading}
+                >
+                  Start Pattern Hunt
+                </button>
+              </div>
+              <div className="p-4 rounded-2xl border border-pink-200 bg-white shadow-sm">
+                <h3 className="text-base font-semibold text-rose-800 mb-1">
+                Wordle
+                </h3>
+                <p className="text-sm text-rose-700 mb-2 leading-relaxed">
+                  Classic 5-letter sleuthing in 6 guesses. Read the colors, zero
+                  in, nail the answer.
+                </p>
+                <button
+                  className="text-sm px-3 py-1.5 rounded-full bg-rose-400 text-rose-50 hover:bg-rose-300 transition"
+                  onClick={() => activateMode("wordle")}
+                  disabled={loading}
+                >
+                  Start Wordle
+                </button>
+              </div>
+              <div className="p-4 rounded-2xl border border-pink-200 bg-white shadow-sm">
+                <h3 className="text-base font-semibold text-rose-800 mb-1">
+                  Quordle
+                </h3>
+                <p className="text-sm text-rose-700 mb-2 leading-relaxed">
+                  Four Wordles at once, 9 shared guesses. One guess, four
+                  boards—can you juggle all the clues?
+                </p>
+                <button
+                  className="text-sm px-3 py-1.5 rounded-full bg-rose-400 text-rose-50 hover:bg-rose-300 transition"
+                  onClick={() => activateMode("quordle")}
+                  disabled={loading}
+                >
+                  Start Quordle
+                </button>
+              </div>
+              <div className="p-4 rounded-2xl border border-pink-200 bg-white shadow-sm">
+                <h3 className="text-base font-semibold text-rose-800 mb-1">
+                  Streakle
+                </h3>
+                <p className="text-sm text-rose-700 mb-2 leading-relaxed">
+                  Guess 3 secret words in 8 tries. Greens lock in place; each
+                  solve recolors your past guesses for the next target.
+                </p>
+                <button
+                  className="text-sm px-3 py-1.5 rounded-full bg-rose-400 text-rose-50 hover:bg-rose-300 transition"
+                  onClick={() => activateMode("streakle")}
+                  disabled={loading}
+                >
+                  Start Streakle
+                </button>
+              </div>
+              <div className="p-4 rounded-2xl border border-pink-200 bg-white shadow-sm md:col-span-2">
+                <h3 className="text-base font-semibold text-rose-800 mb-1">
+                  Spelling Bee
+                </h3>
+                <p className="text-sm text-rose-700 mb-2 leading-relaxed">
+                  Build as many words as you can from 7 hive letters (center
+                  required). Hunt pangrams and clear the list.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    className="text-sm px-3 py-1.5 rounded-full bg-rose-400 text-rose-50 hover:bg-rose-300 transition"
+                    onClick={() => activateMode("bee")}
+                    disabled={loading}
+                  >
+                    Start Spelling Bee
+                  </button>
+                  {beeDictLoading && (
+                    <span className="text-xs text-rose-700">
+                      Loading dictionary…
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="mb-3">
+            <div className="flex flex-wrap gap-1 rounded-full bg-pink-100 border border-pink-200 p-1 text-xs text-rose-800">
+              <button
+                type="button"
+                onClick={() => activateMode("home")}
+                className={
+                  "px-3 py-1 rounded-full transition font-semibold " +
+                  (gameMode === "home"
+                    ? "bg-rose-400 text-rose-50 shadow"
+                    : "text-rose-700 hover:text-rose-500")
+                }
+              >
+                Home
+              </button>
+              <button
+                type="button"
+                onClick={() => activateMode("pattern")}
+                className={
+                  "px-3 py-1 rounded-full transition font-semibold " +
+                  (gameMode === "pattern"
+                    ? "bg-rose-400 text-rose-50 shadow"
+                    : "text-rose-700 hover:text-rose-500")
+                }
+              >
+                Pattern hunt
+              </button>
+              <button
+                type="button"
+                onClick={() => activateMode("wordle")}
+                className={
+                  "px-3 py-1 rounded-full transition font-semibold " +
+                  (gameMode === "wordle"
+                    ? "bg-rose-400 text-rose-50 shadow"
+                    : "text-rose-700 hover:text-rose-500")
+                }
+              >
+                Wordle
+              </button>
+              <button
+                type="button"
+                onClick={() => activateMode("quordle")}
+                className={
+                  "px-3 py-1 rounded-full transition font-semibold " +
+                  (gameMode === "quordle"
+                    ? "bg-rose-400 text-rose-50 shadow"
+                    : "text-rose-700 hover:text-rose-500")
+                }
+              >
+                Quordle
+              </button>
+              <button
+                type="button"
+                onClick={() => activateMode("streakle")}
+                className={
+                  "px-3 py-1 rounded-full transition font-semibold " +
+                  (gameMode === "streakle"
+                    ? "bg-rose-400 text-rose-50 shadow"
+                    : "text-rose-700 hover:text-rose-500")
+                }
+              >
+                Streakle
+              </button>
+              <button
+                type="button"
+                onClick={() => activateMode("bee")}
+                className={
+                  "px-3 py-1 rounded-full transition font-semibold " +
+                  (gameMode === "bee"
+                    ? "bg-rose-400 text-rose-50 shadow"
+                    : "text-rose-700 hover:text-rose-500")
+                }
+              >
+                Spelling Bee
+              </button>
+            </div>
+          </div>
+        )}
+
+        {gameMode !== "home" && (
+          <p className="text-sm text-rose-700 mb-3">
+            {gameMode === "pattern" ? (
+              <>
+                A pattern is chosen from the Wordle answers list so that roughly
+                <span className="font-semibold"> 3-15 </span>
+                words match. Guess any valid word that fits the pattern.
+              </>
+            ) : gameMode === "wordle" ? (
+              <>
+                Practice classic Wordle using the same answer list. You have
+                <span className="font-semibold"> 6 </span>
+                guesses to find the hidden word. Green = correct spot, yellow =
+                wrong spot, grey = not in the word.
+              </>
+            ) : gameMode === "quordle" ? (
+              <>
+                Play four Wordles at once. You have
+                <span className="font-semibold"> 9 </span>
+                guesses, and each guess is applied to all four boards. The
+                keyboard shows colors in quadrants for each board (top-left,
+                top-right, bottom-left, bottom-right).
+              </>
+            ) : gameMode === "bee" ? (
+              <>
+                Spelling Bee: make as many words as possible from
+                <span className="font-semibold"> 7 </span>
+                letters. Every word must be at least 4 letters, include the center
+                letter, and use only the hive letters (repeats allowed). Find the
+                pangram(s) that use all 7.
+              </>
+            ) : (
+              <>
+                Streakle: solve
+                <span className="font-semibold"> 3 </span>
+                target words within
+                <span className="font-semibold"> 8 </span>
+                total guesses. A starting word is auto-played; greens lock in
+                place for future guesses. After you crack a word, the board
+                recolors your past guesses for the next target.
+              </>
+            )}
+          </p>
+        )}
 
         {loading && <p className="text-rose-700 mt-4">Loading word list...</p>}
         {error && !loading && (
