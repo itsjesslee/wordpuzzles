@@ -2,7 +2,10 @@ import React, { useEffect, useMemo, useState } from "react";
 
 const WORD_LIST_URL =
   "https://gist.githubusercontent.com/cfreshman/a03ef2cba789d8cf00c08f767e0fad7b/raw/c46f451920d5cf6326d550fb2d6abb1642717852/wordle-answers-alphabetical.txt";
-const BEE_DICT_URL = "/bee-dict.txt";
+const BEE_DICT_URL = new URL(
+  "bee-dict.txt",
+  import.meta.env.BASE_URL || "/"
+).toString();
 
 const MIN_MATCHES = 3;
 const MAX_MATCHES = 15;
