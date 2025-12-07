@@ -468,6 +468,25 @@ export default function App() {
     return pattern;
   }, [streakleCurrentIndex, streakleGuesses, streakleResults, streakleTargets]);
 
+  const streakleRequiredLetters = useMemo(() => {
+    if (!streakleTargets || streakleTargets.length === 0) return new Set<string>();
+    const boardResults = streakleResults[streakleCurrentIndex] || [];
+    const required = new Set<string>();
+
+    for (let row = 0; row < boardResults.length; row++) {
+      const resultRow = boardResults[row] || [];
+      const guess = streakleGuesses[row] || "";
+      for (let col = 0; col < resultRow.length; col++) {
+        if (resultRow[col] === "present") {
+          const letter = guess[col];
+          if (letter) required.add(letter);
+        }
+      }
+    }
+
+    return required;
+  }, [streakleCurrentIndex, streakleGuesses, streakleResults, streakleTargets]);
+
   const beeOuterLetters = useMemo(() => {
     if (!beeLetters || !beeCenterLetter) return [];
     return beeLetters.filter((l) => l !== beeCenterLetter);
@@ -698,12 +717,7 @@ export default function App() {
     setStreakleGuess("");
     setStreakleDone(solved.every(Boolean) || remaining <= 0);
     setStreakleReveal(false);
-    setStreakleMessage(
-      "Starting word auto-played: " +
-        startWord +
-        ". " +
-        (remaining === 1 ? "1 guess left." : remaining + " guesses left.")
-    );
+    setStreakleMessage("");
     resetTimerForRound();
   }
 
@@ -955,6 +969,18 @@ export default function App() {
       }
     }
 
+    if (streakleRequiredLetters.size > 0) {
+      const missing = Array.from(streakleRequiredLetters).filter(
+        (ch) => !raw.includes(ch)
+      );
+      if (missing.length > 0) {
+        setStreakleMessage(
+          "Include yellow letters: " + missing.join(", ")
+        );
+        return;
+      }
+    }
+
     const newGuesses = [...streakleGuesses, raw];
     const newResults = computeStreakleResults(newGuesses, streakleTargets);
     const solved = streakleTargets.map((t) => newGuesses.includes(t));
@@ -1150,6 +1176,9 @@ export default function App() {
               your puzzle instincts.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="md:col-span-2 text-xs uppercase tracking-wide text-rose-500 font-semibold">
+                Recommended practice
+              </div>
               <div className="p-4 rounded-2xl border border-pink-200 bg-white shadow-sm">
                 <h3 className="text-base font-semibold text-rose-800 mb-1">
                   Pattern Hunt
@@ -1168,7 +1197,26 @@ export default function App() {
               </div>
               <div className="p-4 rounded-2xl border border-pink-200 bg-white shadow-sm">
                 <h3 className="text-base font-semibold text-rose-800 mb-1">
-                Wordle
+                  Streakle
+                </h3>
+                <p className="text-sm text-rose-700 mb-2 leading-relaxed">
+                  Guess 3 secret words in 8 tries. Each solve recolors your past
+                  guesses for the next target.
+                </p>
+                <button
+                  className="text-sm px-3 py-1.5 rounded-full bg-rose-400 text-rose-50 hover:bg-rose-300 transition"
+                  onClick={() => activateMode("streakle")}
+                  disabled={loading}
+                >
+                  Start Streakle
+                </button>
+              </div>
+              <div className="md:col-span-2 text-xs uppercase tracking-wide text-rose-500 font-semibold mt-1">
+                Classic
+              </div>
+              <div className="p-4 rounded-2xl border border-pink-200 bg-white shadow-sm">
+                <h3 className="text-base font-semibold text-rose-800 mb-1">
+                  Wordle
                 </h3>
                 <p className="text-sm text-rose-700 mb-2 leading-relaxed">
                   Classic 5-letter sleuthing in 6 guesses. Read the colors, zero
@@ -1196,22 +1244,6 @@ export default function App() {
                   disabled={loading}
                 >
                   Start Quordle
-                </button>
-              </div>
-              <div className="p-4 rounded-2xl border border-pink-200 bg-white shadow-sm">
-                <h3 className="text-base font-semibold text-rose-800 mb-1">
-                  Streakle
-                </h3>
-                <p className="text-sm text-rose-700 mb-2 leading-relaxed">
-                  Guess 3 secret words in 8 tries. Greens lock in place; each
-                  solve recolors your past guesses for the next target.
-                </p>
-                <button
-                  className="text-sm px-3 py-1.5 rounded-full bg-rose-400 text-rose-50 hover:bg-rose-300 transition"
-                  onClick={() => activateMode("streakle")}
-                  disabled={loading}
-                >
-                  Start Streakle
                 </button>
               </div>
               <div className="p-4 rounded-2xl border border-pink-200 bg-white shadow-sm md:col-span-2">
@@ -1268,6 +1300,18 @@ export default function App() {
               </button>
               <button
                 type="button"
+                onClick={() => activateMode("streakle")}
+                className={
+                  "px-3 py-1 rounded-full transition font-semibold " +
+                  (gameMode === "streakle"
+                    ? "bg-rose-400 text-rose-50 shadow"
+                    : "text-rose-700 hover:text-rose-500")
+                }
+              >
+                Streakle
+              </button>
+              <button
+                type="button"
                 onClick={() => activateMode("wordle")}
                 className={
                   "px-3 py-1 rounded-full transition font-semibold " +
@@ -1289,18 +1333,6 @@ export default function App() {
                 }
               >
                 Quordle
-              </button>
-              <button
-                type="button"
-                onClick={() => activateMode("streakle")}
-                className={
-                  "px-3 py-1 rounded-full transition font-semibold " +
-                  (gameMode === "streakle"
-                    ? "bg-rose-400 text-rose-50 shadow"
-                    : "text-rose-700 hover:text-rose-500")
-                }
-              >
-                Streakle
               </button>
               <button
                 type="button"
@@ -1349,18 +1381,18 @@ export default function App() {
                 letter, and use only the hive letters (repeats allowed). Find the
                 pangram(s) that use all 7.
               </>
-            ) : (
-              <>
-                Streakle: solve
-                <span className="font-semibold"> 3 </span>
-                target words within
-                <span className="font-semibold"> 8 </span>
-                total guesses. A starting word is auto-played; greens lock in
-                place for future guesses. After you crack a word, the board
-                recolors your past guesses for the next target.
-              </>
-            )}
-          </p>
+          ) : (
+            <>
+              Streakle: solve
+              <span className="font-semibold"> 3 </span>
+              target words within
+              <span className="font-semibold"> 8 </span>
+              total guesses. Greens lock in place and yellows must stay in the
+              word. After you crack a word, the board recolors your past guesses
+              for the next target.
+            </>
+          )}
+        </p>
         )}
 
         {loading && <p className="text-rose-700 mt-4">Loading word list...</p>}
@@ -1453,28 +1485,8 @@ export default function App() {
             </section>
 
             <section>
-              <h2 className="text-sm font-semibold tracking-wide text-rose-500 uppercase mb-2">
-                Found words ({foundWords.length})
-              </h2>
-              {foundWords.length === 0 ? (
-                <p className="text-sm text-rose-600">
-                  Nothing yet - start guessing words that match the pattern.
-                </p>
-              ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {foundWords.map((w) => (
-                    <div
-                      key={w}
-                      className="px-2 py-1.5 rounded-xl bg-rose-100 border border-rose-200 text-center font-mono text-sm text-rose-900"
-                    >
-                      {w}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {revealSolutions && (
-                <section className="mt-5">
+              {revealSolutions ? (
+                <section className="mt-1">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className="text-sm font-semibold tracking-wide text-rose-500 uppercase">
                       All matching words
@@ -1508,6 +1520,28 @@ export default function App() {
                       );
                     })}
                   </div>
+                </section>
+              ) : (
+                <section className="mt-2">
+                  <h2 className="text-sm font-semibold tracking-wide text-rose-500 uppercase mb-2">
+                    Found words ({foundWords.length})
+                  </h2>
+                  {foundWords.length === 0 ? (
+                    <p className="text-sm text-rose-600">
+                      Nothing yet - start guessing words that match the pattern.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                      {foundWords.map((w) => (
+                        <div
+                          key={w}
+                          className="px-2 py-1.5 rounded-xl bg-rose-100 border border-rose-200 text-center font-mono text-sm text-rose-900"
+                        >
+                          {w}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </section>
               )}
             </section>
@@ -1607,9 +1641,6 @@ export default function App() {
               {wordleMessage && (
                 <p className="mt-2 text-sm text-rose-600">{wordleMessage}</p>
               )}
-              <p className="mt-1 text-xs text-rose-600">
-                Guesses used: {wordleGuesses.length}/6
-              </p>
             </section>
 
             <section className="mb-6">
@@ -1830,10 +1861,6 @@ export default function App() {
                   <h2 className="text-sm font-semibold tracking-wide text-rose-500 uppercase mb-1">
                     Streak progress
                   </h2>
-                  <p className="text-sm text-rose-700">
-                    Target {streakleCurrentIndex + 1}/3 • Guesses used{" "}
-                    {streakleGuesses.length}/8
-                  </p>
                 </div>
                 {streakleStartWord && (
                   <div className="text-xs text-rose-500">
@@ -1958,12 +1985,8 @@ export default function App() {
                   </p>
                 )}
               {streakleMessage && (
-                <p className="mt-2 text-sm text-sky-200">{streakleMessage}</p>
+                <p className="mt-2 text-sm text-rose-600">{streakleMessage}</p>
               )}
-              <p className="mt-1 text-xs text-rose-500">
-                Targets solved: {streakleSolved.filter(Boolean).length}/3 •
-                Guesses used: {streakleGuesses.length}/8
-              </p>
             </section>
 
             <section className="mb-6">
@@ -2125,11 +2148,8 @@ export default function App() {
                 </button>
               </form>
               {quordleMessage && (
-                <p className="mt-2 text-sm text-sky-200">{quordleMessage}</p>
+                <p className="mt-2 text-sm text-rose-700">{quordleMessage}</p>
               )}
-              <p className="mt-1 text-xs text-rose-500">
-                Guesses used: {quordleGuesses.length}/9
-              </p>
             </section>
 
             <section className="mb-6">
